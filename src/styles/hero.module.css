@@ -1,0 +1,430 @@
+/* Premium Editorial Light Theme — Full Right-Side Video Background */
+
+.hero {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+  background-color: #ffffff;
+  color: #111111;
+  padding-top: 5.5rem;
+}
+
+/* Background Subtle Architectural Grid */
+.gridPattern {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  background-image:
+    linear-gradient(to right, rgba(17, 17, 17, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(17, 17, 17, 0.03) 1px, transparent 1px);
+  background-size: 56px 56px;
+  pointer-events: none;
+}
+
+/* Full Right-Side Video Background Container */
+.rightVideoBackground {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 58%;
+  height: 100%;
+  z-index: 2;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.videoElement {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+  display: block;
+}
+
+/* Compact Subtle White Gradient Blend for Hero Video */
+.videoGradientBlend {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 3;
+  pointer-events: none;
+  background:
+    /* Left to Right subtle white gradient fade */
+    linear-gradient(to right,
+      #ffffff 0%,
+      rgba(255, 255, 255, 0.75) 10%,
+      rgba(255, 255, 255, 0.25) 22%,
+      transparent 35%),
+    /* Soft Top and Bottom edge transitions */
+    linear-gradient(to bottom,
+      rgba(255, 255, 255, 0.4) 0%,
+      transparent 12%,
+      transparent 88%,
+      #ffffff 100%);
+}
+
+/* Floating HUD Tags on the Video Area */
+.floatingReticleTop {
+  position: absolute;
+  top: 6.5rem;
+  right: 2.5rem;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.4rem 0.85rem;
+  background-color: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(229, 229, 224, 0.95);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: #111111;
+  letter-spacing: 0.08em;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+}
+
+.liveDot {
+  width: 6px;
+  height: 6px;
+  background-color: #0052ff;
+  border-radius: 50%;
+  box-shadow: 0 0 6px rgba(0, 82, 255, 0.6);
+  animation: pulseGlow 1.5s infinite ease-in-out;
+}
+
+.floatingReticleBottom {
+  position: absolute;
+  bottom: 6.75rem;
+  right: 2.5rem;
+  z-index: 5;
+  padding: 0.4rem 0.85rem;
+  background-color: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(229, 229, 224, 0.95);
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: #5c5c5c;
+  letter-spacing: 0.06em;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+}
+
+/* Main Content Container (Left Side) */
+.mainContainer {
+  position: relative;
+  z-index: 10;
+  max-width: 1440px;
+  width: 100%;
+  margin: auto auto;
+  padding: 2.5rem 2.5rem 1.5rem 2.5rem;
+  display: flex;
+  align-items: center;
+}
+
+.leftCol {
+  max-width: 650px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+}
+
+.badgeWrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.4rem 0.95rem;
+  border: 1px solid #e5e5e0;
+  background-color: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+  margin-bottom: 2rem;
+  border-radius: 2px;
+  animation: slideUp 0.6s var(--transition-smooth) both;
+}
+
+.badgePulse {
+  width: 7px;
+  height: 7px;
+  background-color: #0052ff;
+  border-radius: 50%;
+  box-shadow: 0 0 8px rgba(0, 82, 255, 0.45);
+  animation: pulseGlow 1.8s infinite ease-in-out;
+}
+
+.badgeText {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: #111111;
+  text-transform: uppercase;
+}
+
+.heading {
+  font-family: var(--font-heading);
+  font-size: clamp(2.5rem, 5.2vw, 4.6rem);
+  font-weight: 700;
+  line-height: 1.02;
+  letter-spacing: -0.035em;
+  color: #111111;
+  text-transform: uppercase;
+  margin-bottom: 1.5rem;
+  animation: slideUp 0.7s 0.1s var(--transition-smooth) both;
+}
+
+.titleLine {
+  display: block;
+}
+
+.titleOutline {
+  display: block;
+  -webkit-text-stroke: 1.5px #111111;
+  color: transparent;
+  transition: color 0.3s ease;
+}
+
+.titleOutline:hover {
+  color: #111111;
+}
+
+.description {
+  max-width: 560px;
+  font-family: var(--font-body);
+  font-size: clamp(0.96rem, 1.18vw, 1.12rem);
+  font-weight: 400;
+  line-height: 1.68;
+  color: #5c5c5c;
+  margin-bottom: 2.5rem;
+  animation: slideUp 0.7s 0.2s var(--transition-smooth) both;
+}
+
+.ctaGroup {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 2.5rem;
+  animation: slideUp 0.7s 0.3s var(--transition-smooth) both;
+}
+
+.primaryCta {
+  font-family: var(--font-heading);
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  padding: 0.95rem 2.2rem;
+  background-color: #111111;
+  color: #ffffff;
+  border: 1px solid #111111;
+  border-radius: 2px;
+  transition: all 0.25s var(--transition-smooth);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  box-shadow: 0 4px 12px rgba(17, 17, 17, 0.08);
+}
+
+.primaryCta:hover {
+  background-color: #0052ff;
+  border-color: #0052ff;
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 82, 255, 0.25);
+}
+
+.secondaryCta {
+  font-family: var(--font-heading);
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  padding: 0.95rem 2.2rem;
+  background-color: #ffffff;
+  color: #111111;
+  border: 1px solid #e5e5e0;
+  border-radius: 2px;
+  transition: all 0.25s var(--transition-smooth);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.secondaryCta:hover {
+  border-color: #111111;
+  background-color: #111111;
+  color: #ffffff;
+  transform: translateY(-2px);
+}
+
+.specRow {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e5e5e0;
+  width: 100%;
+  max-width: 560px;
+  animation: slideUp 0.7s 0.35s var(--transition-smooth) both;
+}
+
+.specItem {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #5c5c5c;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  letter-spacing: 0.05em;
+}
+
+.specDot {
+  width: 5px;
+  height: 5px;
+  background-color: #0052ff;
+  border-radius: 50%;
+}
+
+/* Telemetry Metrics Bar */
+.metricsBar {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 1.6rem 2.5rem;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+  border-top: 1px solid #e5e5e0;
+  background-color: rgba(250, 250, 248, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  animation: fadeIn 1s 0.4s var(--transition-smooth) both;
+}
+
+.metricItem {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  position: relative;
+}
+
+.metricItem:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  right: -0.75rem;
+  top: 15%;
+  height: 70%;
+  width: 1px;
+  background-color: #e5e5e0;
+}
+
+.metricValue {
+  font-family: var(--font-heading);
+  font-size: 1.45rem;
+  font-weight: 700;
+  color: #111111;
+  letter-spacing: -0.02em;
+  transition: color 0.2s ease;
+}
+
+.metricItem:hover .metricValue {
+  color: #0052ff;
+}
+
+.metricLabel {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #5c5c5c;
+  letter-spacing: 0.09em;
+  margin-top: 0.25rem;
+  text-transform: uppercase;
+}
+
+/* Responsive Breakpoints */
+@media (max-width: 1024px) {
+  .rightVideoBackground {
+    width: 100%;
+    opacity: 0.35;
+  }
+
+  .videoGradientBlend {
+    background: linear-gradient(to bottom,
+        rgba(250, 250, 248, 0.75) 0%,
+        rgba(250, 250, 248, 0.9) 100%);
+  }
+
+  .leftCol {
+    max-width: 100%;
+    align-items: center;
+    text-align: center;
+  }
+
+  .specRow {
+    justify-content: center;
+  }
+
+  .floatingReticleTop,
+  .floatingReticleBottom {
+    display: none;
+  }
+
+  .metricsBar {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+
+  .metricItem {
+    align-items: center;
+    text-align: center;
+  }
+
+  .metricItem:nth-child(2)::after {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .hero {
+    padding-top: 5rem;
+  }
+
+  .mainContainer {
+    padding: 1.5rem 1.25rem;
+  }
+
+  .ctaGroup {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .primaryCta,
+  .secondaryCta {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .metricsBar {
+    grid-template-columns: repeat(2, 1fr);
+    padding: 1.25rem 1.25rem;
+  }
+
+  .metricValue {
+    font-size: 1.2rem;
+  }
+}
