@@ -9,10 +9,10 @@ export const TestimonialsSection = () => {
     <section id="testimonials" className={styles.testimonialsSection} aria-label="Client Testimonials">
       <div className={styles.container}>
         <div className={styles.header}>
-          <span className={styles.sectionTag}>CLIENT EXPERIENCES</span>
-          <h2 className={styles.title}>WORDS FROM OUR CO-CREATORS</h2>
+          <span className={styles.sectionTag}>SHARED MOMENTS</span>
+          <h2 className={styles.title}>STORIES OF LOVE & SPECTACLE</h2>
           <p className={styles.subtitle}>
-            Read how our aerial productions elevated luxury weddings, headline festival stages, and international brand campaigns.
+            Discover how Drone Amare has created unforgettable aerial experiences for weddings, festivals, and cinematic productions.
           </p>
         </div>
 

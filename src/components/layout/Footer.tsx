@@ -14,7 +14,7 @@ export const Footer = () => {
           <div className={styles.brandCol}>
             <Image
               src="/mainlogo.png"
-              alt="DRONE AMRE Logo"
+              alt="DRONE AMARE Logo"
               width={160}
               height={50}
               className={styles.footerLogoImage}
@@ -71,7 +71,7 @@ export const Footer = () => {
             © {new Date().getFullYear()} {SITE_CONFIG.name}. ALL RIGHTS RESERVED.
           </div>
           <div className={styles.safetyNotice}>
-            FAA PART 107 LICENSED // $5M EVENT LIABILITY INSURED
+            CERTIFIED PROFESSIONALS // FULLY INSURED OPERATIONS
           </div>
         </div>
       </div>

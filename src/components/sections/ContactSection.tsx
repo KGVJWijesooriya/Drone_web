@@ -27,10 +27,10 @@ export const ContactSection = () => {
           {/* Info Column */}
           <div className={styles.infoCol}>
             <div>
-              <span className={styles.sectionTag}>BOOKINGS & INQUIRIES</span>
-              <h2 className={styles.title}>RESERVE YOUR FLIGHT MISSION</h2>
+              <span className={styles.sectionTag}>LET'S CREATE SOMETHING BEAUTIFUL</span>
+              <h2 className={styles.title}>RESERVE YOUR MOMENT IN THE SKY</h2>
               <p className={styles.subtitle}>
-                We accept a limited number of weddings, commercial shoots, and aerial spectacles each season to ensure uncompromising quality and bespoke pilot attention.
+                We accept a limited number of weddings, commercial shoots, and aerial spectacles each season to ensure uncompromising quality and dedicated creative focus.
               </p>
             </div>
 
@@ -57,7 +57,7 @@ export const ContactSection = () => {
           {/* Form Card */}
           <div className={styles.formCard}>
             <div className={styles.formHeader}>
-              <h3 className={styles.formTitle}>FLIGHT RESERVATION FORM</h3>
+              <h3 className={styles.formTitle}>EVENT RESERVATION FORM</h3>
               <p className={styles.formDesc}>// RESPONSE DISPATCHED WITHIN 4 BUSINESS HOURS</p>
             </div>
 
@@ -146,7 +146,7 @@ export const ContactSection = () => {
                 </div>
 
                 <button type="submit" className={styles.submitBtn}>
-                  <span>SUBMIT FLIGHT REQUEST</span>
+                  <span>SEND MY ENQUIRY</span>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square">
                     <line x1="5" y1="12" x2="19" y2="12" />
                     <polyline points="12 5 19 12 12 19" />
