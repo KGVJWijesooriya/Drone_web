@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
+import gsap from 'gsap';
 import styles from '@/styles/dronePetalDrop.module.css';
 
 interface Petal {
@@ -24,18 +25,14 @@ interface Petal {
   wobble: number; // per-petal randomness seed for organic flutter
 }
 
-type Timeout = ReturnType<typeof setTimeout>;
-
-// Cheap smoothstep-style easing for the drone's entrance/exit glide.
-const easeInOutCubic = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
-
 export default function DronePetalDrop() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const droneRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    const droneEl = droneRef.current;
+    if (!canvas || !droneEl) return;
     const ctx = canvas.getContext('2d', { alpha: true });
     if (!ctx) return;
 
@@ -47,17 +44,30 @@ export default function DronePetalDrop() {
     let width = window.innerWidth;
     let height = window.innerHeight;
     let dpr = Math.min(window.devicePixelRatio || 1, 2);
-
-    // Responsive drone parameters (scaled down & slowed down on mobile devices)
     let isMobile = width < 768;
-    let droneWidth = isMobile ? 150 : 240;
-    let droneHeight = droneWidth / 1.79356;
-    let bucketOffsetX = droneWidth * 0.5037;
-    let bucketOffsetY = droneHeight * 0.898;
-    let bucketMouthWidth = droneWidth * (230 / 669);
-    // Slow, graceful flight on mobile (1.5 px/frame) vs desktop (4.2 px/frame)
-    let droneSpeed = isMobile ? 1.5 : 4.2;
-    let flightDistance = width + droneWidth + 120;
+
+    // Responsive drone parameters (scaled down & slowed on mobile), recomputed
+    // whenever the viewport size crosses the mobile breakpoint.
+    let droneWidth = 0;
+    let droneHeight = 0;
+    let bucketOffsetX = 0;
+    let bucketOffsetY = 0;
+    let bucketMouthWidth = 0;
+    let droneSpeed = 0; // legacy px/frame @60fps reference, converted to a GSAP duration per flight
+    let flightDistance = 0;
+    let maxPetals = 0;
+
+    const computeDroneParams = () => {
+      droneWidth = isMobile ? 150 : 240;
+      droneHeight = droneWidth / 1.79356;
+      bucketOffsetX = droneWidth * 0.5037;
+      bucketOffsetY = droneHeight * 0.898;
+      bucketMouthWidth = droneWidth * (230 / 669);
+      droneSpeed = isMobile ? 1.5 : 4.2;
+      flightDistance = width + droneWidth + 120;
+      maxPetals = isMobile ? 800 : 1800;
+    };
+    computeDroneParams();
 
     // Crisp on retina screens without paying full cost on ultra-high-DPI displays.
     const resizeCanvas = () => {
@@ -71,19 +81,11 @@ export default function DronePetalDrop() {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
       isMobile = width < 768;
-      droneWidth = isMobile ? 150 : 240;
-      droneHeight = droneWidth / 1.79356;
-      bucketOffsetX = droneWidth * 0.5037;
-      bucketOffsetY = droneHeight * 0.898;
-      bucketMouthWidth = droneWidth * (230 / 669);
-      droneSpeed = isMobile ? 1.5 : 4.2;
-      flightDistance = width + droneWidth + 120;
+      computeDroneParams();
     };
 
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas, { passive: true });
-
-    const MAX_PETALS = isMobile ? 800 : 1800;
 
     const petals: Petal[] = [];
     // Each entry pairs a base petal color with a soft, slightly warmer highlight
@@ -99,32 +101,11 @@ export default function DronePetalDrop() {
       { base: '#ff758f', highlight: '#ffd6de' },
     ];
 
-    let droneX = -droneWidth - 40;
-    let droneY = height * (isMobile ? 0.14 : 0.18);
-    let flightProgress = 0; // 0 -> 1 across the full flight
-    let flightTime = 0;
-
-    // Flight schedule state: true immediately on first load, then triggers every 1 min
-    let isFlying = !prefersReducedMotion;
-    const FLIGHT_INTERVAL_MS = 60000;
-    let nextFlightTimer: Timeout | null = null;
-
-    const startNextFlightSchedule = () => {
-      if (nextFlightTimer) clearTimeout(nextFlightTimer);
-      nextFlightTimer = setTimeout(() => {
-        droneX = -droneWidth - 40;
-        droneY = height * (isMobile ? 0.12 + Math.random() * 0.05 : 0.14 + Math.random() * 0.08);
-        flightTime = 0;
-        flightProgress = 0;
-        isFlying = true;
-      }, FLIGHT_INTERVAL_MS);
-    };
-
     // Create a new petal emerging directly from the bucket opening, with a
     // randomized depth (z) so the stream reads as a 3D cloud rather than a
     // flat curtain — near petals are bigger, faster, and more opaque.
     const createPetal = (originX: number, originY: number) => {
-      if (petals.length >= MAX_PETALS) return;
+      if (petals.length >= maxPetals) return;
 
       const z = Math.random() * 0.8 + 0.5; // 0.5 (far) .. 1.3 (near)
       const baseOpacity = (Math.random() * 0.2 + 0.7) * Math.min(1, z);
@@ -194,105 +175,187 @@ export default function DronePetalDrop() {
       ctx.restore();
     };
 
-    let animationFrameId: number;
-    let isTabVisible = true;
+    const ctxScope = gsap.context(() => {
+      // ==========================================
+      // DRONE FLIGHT — fully GSAP-driven
+      // ==========================================
+      // `proxy` is the single source of truth for the drone's on-screen
+      // position/opacity/scale. GSAP tweens write into it; `syncDrone`
+      // reads it once per update and applies a single transform, so every
+      // moving part (entrance fade, forward flight, exit fade, hover bob)
+      // composites into one clean write instead of scattered style writes.
+      const proxy = { x: -droneWidth - 40, y: height * 0.16, hoverY: 0, opacity: 0, scale: 0.85 };
 
-    const onVisibilityChange = () => {
-      isTabVisible = document.visibilityState === 'visible';
-    };
-    document.addEventListener('visibilitychange', onVisibilityChange);
+      let flightTl: gsap.core.Timeline | null = null;
+      let hoverTween: gsap.core.Tween | null = null;
+      let flightActive = false;
+      let spawnCounter = 0;
 
-    let lastSpawn = 0;
+      const syncDrone = () => {
+        const finalY = proxy.y + proxy.hoverY;
+        droneEl.style.transform = `translate3d(${proxy.x}px, ${finalY}px, 0) scale(${proxy.scale})`;
+        droneEl.style.opacity = String(proxy.opacity);
+      };
 
-    const animate = (t: number) => {
-      if (!isTabVisible) {
-        animationFrameId = requestAnimationFrame(animate);
-        return;
-      }
+      const stopHover = () => {
+        hoverTween?.kill();
+        hoverTween = null;
+      };
 
-      ctx.clearRect(0, 0, width, height);
+      // A gentle, continuous hover bob — built from GSAP's own sine easing
+      // via a yoyo tween rather than a hand-rolled Math.sin loop. This is
+      // what makes the drone read as "hovering" while it drifts forward.
+      const startHover = (amplitude: number) => {
+        stopHover();
+        proxy.hoverY = 0;
+        hoverTween = gsap.to(proxy, {
+          hoverY: amplitude,
+          duration: 1.6,
+          ease: 'sine.inOut',
+          yoyo: true,
+          repeat: -1,
+          onUpdate: syncDrone,
+        });
+      };
 
-      if (isFlying) {
-        flightTime += 0.035;
+      const scheduleNextFlight = () => {
+        gsap.delayedCall(60, launchFlight);
+      };
 
-        // Smooth easing for the flight trajectory across screen
-        const rawProgress = Math.min(1, flightProgress + droneSpeed / flightDistance);
-        flightProgress = rawProgress;
-        const eased = easeInOutCubic(flightProgress);
-        droneX = -droneWidth - 40 + eased * flightDistance;
+      const launchFlight = () => {
+        if (prefersReducedMotion) return;
 
+        computeDroneParams(); // pick up the latest responsive values before each flight
+
+        const baseY = height * (isMobile ? 0.12 + Math.random() * 0.05 : 0.14 + Math.random() * 0.08);
         const hoverAmplitude = isMobile ? 7 : 10;
-        const currentDroneY = droneY + Math.sin(flightTime) * hoverAmplitude + Math.cos(flightTime * 0.6) * 3;
+        // Preserve the original px/frame@60fps speed feel, expressed as a
+        // GSAP tween duration in seconds.
+        const flightSeconds = flightDistance / (droneSpeed * 60);
+        const fadeSeconds = flightSeconds * 0.12;
 
-        if (droneRef.current) {
-          droneRef.current.style.transform = `translate3d(${droneX}px, ${currentDroneY}px, 0)`;
-          droneRef.current.style.visibility = 'visible';
-        }
+        gsap.set(proxy, { x: -droneWidth - 40, y: baseY, hoverY: 0, opacity: 0, scale: 0.85 });
+        syncDrone();
+        droneEl.style.visibility = 'visible';
+        flightActive = true;
+        spawnCounter = 0;
+        startHover(hoverAmplitude);
 
-        // Emit petals continuously from the bucket mouth while on screen
-        if (droneX > -droneWidth + 15 && droneX < width + 30) {
-          const bucketX = droneX + bucketOffsetX;
-          const bucketY = currentDroneY + bucketOffsetY;
-          lastSpawn += 1;
-          const spawnEvery = isMobile ? 2 : (1 + Math.round(Math.sin(flightTime * 3) * 0.5 + 0.5));
-          if (lastSpawn >= spawnEvery) {
-            createPetal(bucketX, bucketY);
-            lastSpawn = 0;
-          }
-        }
+        flightTl = gsap.timeline({
+          onComplete: () => {
+            flightActive = false;
+            droneEl.style.visibility = 'hidden';
+            stopHover();
+            scheduleNextFlight();
+          },
+        });
 
-        if (flightProgress >= 1) {
-          isFlying = false;
-          if (droneRef.current) {
-            droneRef.current.style.visibility = 'hidden';
-            droneRef.current.style.transform = `translate3d(-500px, -500px, 0)`;
-          }
-          startNextFlightSchedule();
-        }
+        flightTl
+          .to(proxy, { opacity: 1, scale: 1, duration: fadeSeconds, ease: 'power2.out', onUpdate: syncDrone }, 0)
+          .to(
+            proxy,
+            { x: width + droneWidth + 80, duration: flightSeconds, ease: 'power2.inOut', onUpdate: syncDrone },
+            0
+          )
+          .to(
+            proxy,
+            { opacity: 0, scale: 0.9, duration: fadeSeconds, ease: 'power2.in', onUpdate: syncDrone },
+            Math.max(0, flightSeconds - fadeSeconds)
+          );
+      };
+
+      if (prefersReducedMotion) {
+        droneEl.style.visibility = 'hidden';
+      } else {
+        launchFlight();
       }
 
-      if (petals.length > 0) {
-        const gust = Math.sin(t * 0.00035) * 0.5 + Math.sin(t * 0.0009 + 1.7) * 0.3;
+      // ==========================================
+      // PETAL PARTICLE FIELD — shares GSAP's ticker
+      // ==========================================
+      // Petals are a large, per-pixel canvas particle system (up to 1800
+      // instances), which is far cheaper to run as one procedural loop than
+      // as individual GSAP tweens. Hooking that loop into gsap.ticker keeps
+      // it on the exact same clock as the drone tweens above, instead of a
+      // second unsynced requestAnimationFrame loop racing against GSAP's.
+      let isTabVisible = true;
+      const onVisibilityChange = () => {
+        isTabVisible = document.visibilityState === 'visible';
+        if (isTabVisible) {
+          flightTl?.resume();
+          hoverTween?.resume();
+        } else {
+          flightTl?.pause();
+          hoverTween?.pause();
+        }
+      };
+      document.addEventListener('visibilitychange', onVisibilityChange);
 
-        for (let i = petals.length - 1; i >= 0; i--) {
-          const p = petals[i];
+      const spawnFromBucket = () => {
+        const finalY = proxy.y + proxy.hoverY;
+        if (proxy.x <= -droneWidth + 15 || proxy.x >= width + 30) return;
 
-          const flipCos = Math.cos(p.flip);
-          const resistance = 1 - Math.abs(flipCos) * 0.35;
-          p.y += p.speedY * (0.65 + resistance);
+        const bucketX = proxy.x + bucketOffsetX;
+        const bucketY = finalY + bucketOffsetY;
+        spawnCounter += 1;
+        const spawnEvery = isMobile ? 2 : 1 + Math.round(Math.sin(gsap.ticker.time * 3) * 0.5 + 0.5);
+        if (spawnCounter >= spawnEvery) {
+          createPetal(bucketX, bucketY);
+          spawnCounter = 0;
+        }
+      };
 
-          p.driftPhase += p.driftSpeed;
-          const flutter = Math.sin(p.driftPhase) * p.swayAmplitude;
-          p.x += flutter + gust * p.z;
+      const tick = (time: number) => {
+        if (!isTabVisible) return;
 
-          p.angle += p.angleSpeed + gust * 0.01;
-          p.flip += p.flipSpeed;
+        ctx.clearRect(0, 0, width, height);
 
-          // Gradual fade out at the bottom of the viewport
-          const bottomThreshold = height - 80;
-          if (p.y > bottomThreshold) {
-            const fadeProgress = (p.y - bottomThreshold) / 80;
-            p.opacity = Math.max(0, p.baseOpacity * (1 - fadeProgress));
-          }
+        if (flightActive) spawnFromBucket();
 
-          drawPetal(p, t * 0.001);
+        if (petals.length > 0) {
+          const gust = Math.sin(time * 0.35) * 0.5 + Math.sin(time * 0.9 + 1.7) * 0.3;
 
-          if (p.y > height + 30 || p.opacity <= 0.01) {
-            petals.splice(i, 1);
+          for (let i = petals.length - 1; i >= 0; i--) {
+            const p = petals[i];
+
+            const flipCos = Math.cos(p.flip);
+            const resistance = 1 - Math.abs(flipCos) * 0.35;
+            p.y += p.speedY * (0.65 + resistance);
+
+            p.driftPhase += p.driftSpeed;
+            const flutter = Math.sin(p.driftPhase) * p.swayAmplitude;
+            p.x += flutter + gust * p.z;
+
+            p.angle += p.angleSpeed + gust * 0.01;
+            p.flip += p.flipSpeed;
+
+            // Gradual fade out at the bottom of the viewport
+            const bottomThreshold = height - 80;
+            if (p.y > bottomThreshold) {
+              const fadeProgress = (p.y - bottomThreshold) / 80;
+              p.opacity = Math.max(0, p.baseOpacity * (1 - fadeProgress));
+            }
+
+            drawPetal(p, time);
+
+            if (p.y > height + 30 || p.opacity <= 0.01) {
+              petals.splice(i, 1);
+            }
           }
         }
-      }
+      };
 
-      animationFrameId = requestAnimationFrame(animate);
-    };
+      gsap.ticker.add(tick);
 
-    animationFrameId = requestAnimationFrame(animate);
+      return () => {
+        document.removeEventListener('visibilitychange', onVisibilityChange);
+        gsap.ticker.remove(tick);
+      };
+    }, canvas);
 
     return () => {
       window.removeEventListener('resize', resizeCanvas);
-      document.removeEventListener('visibilitychange', onVisibilityChange);
-      cancelAnimationFrame(animationFrameId);
-      if (nextFlightTimer) clearTimeout(nextFlightTimer);
+      ctxScope.revert(); // kills the flight timeline, hover tween, pending delayedCall, and the ticker listener
     };
   }, []);
 

@@ -3,26 +3,86 @@
 import React, { useRef, useEffect } from "react";
 import styles from "@/styles/hero.module.css";
 import { HERO_DATA } from "@/lib/constants";
+import { useGsapHero } from "@/lib/useGsapHero";
 
 export const HeroSection = () => {
+  const heroRef = useRef<HTMLElement>(null);
+  const videoContainerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const leftColRef = useRef<HTMLDivElement>(null);
+  const badgeRef = useRef<HTMLDivElement>(null);
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const titleBrandRef = useRef<HTMLSpanElement>(null);
+  const descRef = useRef<HTMLParagraphElement>(null);
+  const ctaGroupRef = useRef<HTMLDivElement>(null);
+  const specRowRef = useRef<HTMLDivElement>(null);
+  const metricsBarRef = useRef<HTMLDivElement>(null);
+
+  // Initialize GSAP Entrance Timeline & ScrollTrigger Parallax
+  useGsapHero({
+    heroRef,
+    videoContainerRef,
+    videoRef,
+    leftColRef,
+    badgeRef,
+    headingRef,
+    titleBrandRef,
+    descRef,
+    ctaGroupRef,
+    specRowRef,
+    metricsBarRef,
+  });
 
   useEffect(() => {
     if (videoRef.current) {
-      videoRef.current.playbackRate = 0.9;
+      videoRef.current.playbackRate = 1.0;
       videoRef.current.play().catch(() => {
         // Autoplay fallback
       });
     }
   }, []);
 
+  const renderFlickerText = (
+    text: string,
+    lineType: "fill" | "outline" | "brand" = "fill",
+    lineOffsetDelay = 0
+  ) => {
+    const chars = text.split("");
+    const total = chars.length;
+
+    const flickerClass =
+      lineType === "outline"
+        ? styles.flickerCharOutlineRate
+        : lineType === "brand"
+          ? styles.flickerCharBrandRate
+          : styles.flickerCharFillRate;
+
+    return chars.map((char, index) => {
+      // Scramble index mapping using prime multiplier for deterministic pseudo-random letter selection
+      const randomSlot = (index * 7 + 3) % total;
+      // 2.0s step between slots = 1 character flickers every 2 seconds
+      // plus lineOffsetDelay so each line flickers at a distinct phase offset!
+      const delay = (randomSlot * 2.0 + lineOffsetDelay).toFixed(2);
+
+      return (
+        <span
+          key={index}
+          className={`${styles.char} ${flickerClass}`}
+          style={{ animationDelay: `${delay}s` }}
+        >
+          {char === " " ? "\u00A0" : char}
+        </span>
+      );
+    });
+  };
+
   return (
-    <section className={styles.hero} aria-label="Hero Section">
+    <section ref={heroRef} className={styles.hero} aria-label="Hero Section">
       {/* Background Subtle Grid Pattern */}
       <div className={styles.gridPattern} />
 
       {/* Full Right-Side Video Background */}
-      <div className={styles.rightVideoBackground}>
+      <div ref={videoContainerRef} className={styles.rightVideoBackground}>
         <video
           ref={videoRef}
           className={styles.videoElement}
@@ -41,32 +101,31 @@ export const HeroSection = () => {
         <div className={styles.videoGradientBlend} />
       </div>
 
-      {/* Floating HUD Reticles on Right Video */}
-      <div className={styles.floatingReticleTop}>
-        <span className={styles.liveDot} />
-        <span>AERIAL FEED // 360° LIVE ORBIT</span>
-      </div>
-
-      <div className={styles.floatingReticleBottom}>
-        <span>TELEMETRY: PITCH +0.4° // ALT 120M</span>
-      </div>
-
       {/* Left Column Text & Content */}
       <div className={styles.mainContainer}>
-        <div className={styles.leftCol}>
-          <div className={styles.badgeWrapper}>
+        <div ref={leftColRef} className={styles.leftCol}>
+          <div ref={badgeRef} className={styles.badgeWrapper}>
             <span className={styles.badgePulse} />
             <span className={styles.badgeText}>{HERO_DATA.badge}</span>
           </div>
 
-          <h1 className={styles.heading}>
-            <span className={styles.titleLine}>{HERO_DATA.titleLine1}</span>
-            <span className={styles.titleOutline}>{HERO_DATA.titleLine2}</span>
+          <h1 ref={headingRef} className={styles.heading}>
+            <span className={styles.titleLine}>
+              {renderFlickerText(HERO_DATA.titleLine1, "fill", 0.0)}
+            </span>
+            {/* <span className={styles.titleOutline}>
+              {renderFlickerText(HERO_DATA.titleLine2, "outline", 0.65)}
+            </span> */}
+            <span ref={titleBrandRef} className={styles.titleBrand}>
+              {renderFlickerText(HERO_DATA.titleLine3, "brand", 1.35)}
+            </span>
           </h1>
 
-          <p className={styles.description}>{HERO_DATA.description}</p>
+          <p ref={descRef} className={styles.description}>
+            {HERO_DATA.description}
+          </p>
 
-          <div className={styles.ctaGroup}>
+          <div ref={ctaGroupRef} className={styles.ctaGroup}>
             <a href={HERO_DATA.primaryCta.href} className={styles.primaryCta}>
               <span>{HERO_DATA.primaryCta.label}</span>
               <svg
@@ -92,7 +151,7 @@ export const HeroSection = () => {
             </a>
           </div>
 
-          <div className={styles.specRow}>
+          <div ref={specRowRef} className={styles.specRow}>
             <div className={styles.specItem}>
               <span className={styles.specDot} />
               <span>CERTIFIED MASTER PILOTS</span>
@@ -109,11 +168,16 @@ export const HeroSection = () => {
         </div>
       </div>
 
-      {/* Full-Width Telemetry Metrics Bar at Bottom */}
-      <div className={styles.metricsBar}>
+      {/* Full-Width Telemetry Metrics Bar at Bottom with GSAP Count-Up */}
+      <div ref={metricsBarRef} className={styles.metricsBar}>
         {HERO_DATA.metrics.map((metric, index) => (
           <div key={index} className={styles.metricItem}>
-            <span className={styles.metricValue}>{metric.value}</span>
+            <span
+              className={styles.metricValue}
+              data-metric-val={metric.value}
+            >
+              {metric.value}
+            </span>
             <span className={styles.metricLabel}>{metric.label}</span>
           </div>
         ))}

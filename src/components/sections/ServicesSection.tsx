@@ -1,8 +1,9 @@
 "use client";
 
-import React from "react";
+import React, { useRef } from "react";
 import styles from "@/styles/services.module.css";
 import { SERVICES, ServiceItem } from "@/lib/constants";
+import { useGsapHorizontalServices } from "@/lib/useGsapHorizontalServices";
 
 const ServiceIcon = ({ type }: { type: string }) => {
   switch (type) {
@@ -78,14 +79,17 @@ const ServiceIcon = ({ type }: { type: string }) => {
 
 interface ServiceCardProps {
   service: ServiceItem;
+  isContinuation?: boolean;
 }
 
-const ServiceCard: React.FC<ServiceCardProps> = ({ service }) => {
+const ServiceCard: React.FC<ServiceCardProps> = ({ service, isContinuation }) => {
   const hasMedia = Boolean(service.imageUrl || service.videoUrl);
 
   return (
     <article
-      className={`${styles.card} ${hasMedia ? styles.cardWithMedia : ""}`}
+      className={`${styles.card} ${hasMedia ? styles.cardWithMedia : ""} ${isContinuation ? styles.continuationCard : ""
+        }`}
+      data-service-card
     >
       {service.imageUrl && (
         <div className={styles.mediaBackground} aria-hidden="true">
@@ -94,25 +98,32 @@ const ServiceCard: React.FC<ServiceCardProps> = ({ service }) => {
             alt=""
             className={styles.cardMedia}
             loading="lazy"
+            data-card-media
           />
           <div className={styles.mediaGradientOverlay} />
         </div>
       )}
 
       <div className={styles.cardContent}>
-        <div className={styles.cardTop}>
-          <div className={styles.iconWrapper}>
+        <div className={styles.cardTop} data-anim-text>
+          {/* <div className={styles.iconWrapper}>
             <ServiceIcon type={service.icon} />
-          </div>
+          </div> */}
           <span className={styles.serviceNumber}>//{service.number}</span>
         </div>
 
         <div className={styles.cardBody}>
-          <h3 className={styles.serviceTitle}>{service.title}</h3>
-          <div className={styles.tagline}>{service.tagline}</div>
-          <p className={styles.description}>{service.description}</p>
+          <h3 className={styles.serviceTitle} data-anim-text>
+            {service.title}
+          </h3>
+          <div className={styles.tagline} data-anim-text>
+            {service.tagline}
+          </div>
+          <p className={styles.description} data-anim-text>
+            {service.description}
+          </p>
 
-          <ul className={styles.highlightsList}>
+          <ul className={styles.highlightsList} data-anim-text>
             {service.highlights.map((highlight, idx) => (
               <li key={idx} className={styles.highlightItem}>
                 {highlight}
@@ -121,7 +132,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({ service }) => {
           </ul>
         </div>
 
-        <div className={styles.cardAction}>
+        <div className={styles.cardAction} data-anim-text>
           <a href="#contact" className={styles.bookLink}>
             <span>Book This Service</span>
             <svg
@@ -144,24 +155,82 @@ const ServiceCard: React.FC<ServiceCardProps> = ({ service }) => {
 };
 
 export const ServicesSection = () => {
+  const sectionRef = useRef<HTMLElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const progressBarRef = useRef<HTMLDivElement>(null);
+  const counterRef = useRef<HTMLSpanElement>(null);
+
+  useGsapHorizontalServices({
+    sectionRef,
+    trackRef,
+    progressBarRef,
+    counterRef,
+    totalCount: SERVICES.length,
+  });
+
   return (
-    <section id="services" className={styles.servicesSection} aria-label="Our Services">
-      <div className={styles.container}>
-        <div className={styles.header}>
-          <span className={styles.sectionTag}>OUR AERIAL EXPERIENCES</span>
-          <h2 className={styles.title}>CRAFTED FROM THE SKY, FOR YOUR STORY</h2>
-          <p className={styles.subtitle}>
-            We do not just operate drones — we engineer bespoke aerial spectacles, cinema-grade productions, and magical memories crafted with love.
-          </p>
+    <section
+      id="services"
+      ref={sectionRef}
+      className={styles.servicesSection}
+      aria-label="Our Services"
+    >
+      <div className={styles.pinnedContainer}>
+        {/* Section Header with Telemetry Progress */}
+        <div className={styles.headerWrapper}>
+          <div className={styles.headerLeft}>
+            <span className={styles.sectionTag} data-animate-header>
+              OUR AERIAL EXPERIENCES
+            </span>
+            <h2 className={styles.title} data-animate-header>
+              CRAFTED FROM THE SKY, FOR YOUR STORY
+            </h2>
+            <p className={styles.subtitle} data-animate-header>
+              Bespoke aerial spectacles, cinema-grade productions, and magical memories.
+            </p>
+          </div>
+
+          <div className={styles.headerRight} data-animate-header>
+            <div className={styles.progressCounter}>
+              <span ref={counterRef} className={styles.activeNumber}>
+                01
+              </span>
+              <span className={styles.totalNumber}>
+                / {String(SERVICES.length).padStart(2, "0")}
+              </span>
+            </div>
+
+            <div className={styles.progressBarContainer}>
+              <div ref={progressBarRef} className={styles.progressBarFill} />
+            </div>
+
+            <span className={styles.scrollHint}>
+              <span>SCROLL TO EXPLORE</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="5" y1="12" x2="19" y2="12" />
+                <polyline points="12 5 19 12 12 19" />
+              </svg>
+            </span>
+          </div>
         </div>
 
-        <div className={styles.grid}>
-          {SERVICES.map((service: ServiceItem) => (
-            <ServiceCard key={service.id} service={service} />
-          ))}
+        {/* Horizontal Track Reel */}
+        <div className={styles.trackWrapper}>
+          <div ref={trackRef} className={styles.track}>
+            {SERVICES.map((service: ServiceItem) => (
+              <ServiceCard key={service.id} service={service} />
+            ))}
+            {/* Seamless Continuation Cards: appear on the right on desktop when 7th item is centered */}
+            {SERVICES.slice(0, 3).map((service: ServiceItem, index: number) => (
+              <ServiceCard
+                key={`${service.id}-continue-${index}`}
+                service={service}
+                isContinuation={true}
+              />
+            ))}
+          </div>
         </div>
       </div>
     </section>
   );
 };
-

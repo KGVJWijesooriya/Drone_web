@@ -21,11 +21,12 @@ export const NAV_LINKS = [
 ];
 
 export const HERO_DATA = {
-  badge: "DRONE AMARE // AERIAL ARTISTRY FOR LIFE'S FINEST MOMENTS",
+  badge: "AERIAL ARTISTRY FOR LIFE'S FINEST MOMENTS",
   titleLine1: "LOVE TAKES FLIGHT",
-  titleLine2: "WITH DRONE AMARE",
+  titleLine2: "WITH",
+  titleLine3: "DRONE AMARE",
   description:
-    "We craft breathtaking aerial memories for luxury weddings, celebrations, and grand spectacles — where every petal, every frame, and every flight is an act of love.",
+    "We create breathtaking aerial experiences for luxury weddings, celebrations, and grand occasions, capturing every moment, every detail, and every emotion from a whole new perspective.",
   primaryCta: {
     label: "Explore Our Services",
     href: "#services",
